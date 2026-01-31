@@ -1,9 +1,10 @@
 import { spawn } from 'child_process';
+import youtubeDlExec from 'youtube-dl-exec';
 import ytsr from 'ytsr';
 import { Config } from '../utils/constants.js';
 
-// Path a yt-dlp (ajustar si es necesario)
-const YT_DLP_PATH = process.env.YT_DLP_PATH || 'yt-dlp';
+// Usar el binario incluido en youtube-dl-exec
+const YT_DLP_PATH = youtubeDlExec.constants.YOUTUBE_DL_PATH;
 
 /**
  * Verifica si es una URL de YouTube
