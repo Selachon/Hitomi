@@ -148,6 +148,18 @@ export async function playNext(queue) {
   const song = queue.songs.shift();
   queue.currentSong = song;
   
+  // Validar que la cancion tenga URL
+  if (!song.url) {
+    console.error('Cancion sin URL:', song);
+    queue.currentSong = null;
+    // Intentar con la siguiente
+    if (queue.songs.length > 0) {
+      return playNext(queue);
+    }
+    startInactivityTimer(queue);
+    return false;
+  }
+  
   try {
     const { stream, type } = await getYouTubeStream(song.url);
     

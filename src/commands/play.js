@@ -215,6 +215,16 @@ async function handleSearch(interaction, queue, query) {
  * Agrega una cancion a la cola y responde
  */
 async function addSongToQueue(interaction, queue, song, editComponents = false) {
+  // Validar que song tenga URL
+  if (!song || !song.url) {
+    console.error('Intento de agregar cancion invalida:', song);
+    const options = { 
+      embeds: [errorEmbed('Error: Cancion invalida (sin URL)')],
+      components: editComponents ? [] : undefined
+    };
+    return interaction.editReply(options);
+  }
+  
   const wasEmpty = !queue.currentSong && queue.songs.length === 0;
   
   if (!addToQueue(queue, song)) {
