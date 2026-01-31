@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  hitomi:
+    build: .
+    container_name: hitomi
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+    env_file:
+      - .env
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
