@@ -7,8 +7,6 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-    env_file:
-      - .env
     logging:
       driver: json-file
       options:
