@@ -1,6 +1,12 @@
 import ytdl from '@distube/ytdl-core';
 import ytsr from 'ytsr';
 import { Config } from '../utils/constants.js';
+import { config } from 'dotenv';
+
+config();
+
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Verifica si es una URL de YouTube
@@ -23,7 +29,7 @@ export async function searchYouTube(query, limit = Config.SEARCH_RESULTS) {
       return [];
     }
     
-    const searchResults = await ytsr(filter.url, { limit: limit * 2 }); // Buscar mas por si algunos no son validos
+    const searchResults = await ytsr(filter.url, { limit: limit * 2 });
     
     return searchResults.items
       .filter(item => item.type === 'video' && item.url)
@@ -93,10 +99,18 @@ export async function getYouTubeStream(url) {
   }
   
   try {
+    const cookies = loadYouTubeCookies();
+    
     const stream = ytdl(url, {
       filter: 'audioonly',
       quality: 'highestaudio',
       highWaterMark: 1 << 25, // 32MB buffer
+      requestOptions: {
+        headers: {
+          Cookie: cookies,
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        },
+      },
     });
     
     return {
@@ -108,6 +122,25 @@ export async function getYouTubeStream(url) {
     console.error('URL que causo error:', url);
     throw error;
   }
+}
+
+/**
+ * Carga cookies de YouTube desde archivo
+ */
+function loadYouTubeCookies() {
+  try {
+    const cookiesPath = process.env.YOUTUBE_COOKIES_FILE || './youtube_cookies.json';
+    const cookiesFile = path.resolve(cookiesPath);
+    
+    if (fs.existsSync(cookiesFile)) {
+      const cookies = JSON.parse(fs.readFileSync(cookiesFile, 'utf8'));
+      return cookies.map(c => `${c.name}=${c.value}`).join('; ');
+    }
+  } catch (error) {
+    console.error('Error cargando cookies de YouTube:', error);
+  }
+  
+  return '';
 }
 
 /**
