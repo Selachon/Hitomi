@@ -1,9 +1,12 @@
-import { getTracks, getPreview, getDetails } from 'spotify-url-info';
+import spotifyUrlInfo from 'spotify-url-info';
 import { searchSongOnYouTube } from './youtube.js';
 import { Config } from '../utils/constants.js';
 
 // Crear fetch para spotify-url-info
 const fetch = (await import('node-fetch')).default;
+
+// Extraer funciones de spotify-url-info
+const { getTracks, getPreview, getDetails } = spotifyUrlInfo(fetch);
 
 /**
  * Verifica si es una URL de Spotify
