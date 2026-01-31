@@ -5,7 +5,7 @@ Bot de Discord para reproducir musica con personalidad kawaii (en espanol).
 ## Caracteristicas
 
 - Reproduccion de musica desde YouTube y Spotify
-- Busqueda con 5 resultados para elegir
+- Busqueda con 4 resultados para elegir
 - Soporte de playlists de Spotify (max 50 canciones)
 - Sistema de cola con info de quien agrego cada cancion
 - Auto-desconexion por inactividad (3 minutos)

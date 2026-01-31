@@ -88,7 +88,7 @@ export const Messages = {
 export const Config = {
   INACTIVITY_TIMEOUT: 3 * 60 * 1000, // 3 minutos
   MAX_QUEUE_SIZE: 50,
-  SEARCH_RESULTS: 5,
+  SEARCH_RESULTS: 4, // 4 resultados + boton cancelar = 5 (max Discord)
   SEARCH_TIMEOUT: 30 * 1000, // 30 segundos
   DEFAULT_VOLUME: 50,
   MAX_PLAYLIST_SONGS: 50,

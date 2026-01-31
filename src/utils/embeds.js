@@ -206,7 +206,7 @@ export function helpEmbed() {
         name: `${Emoji.SPARKLE} Caracteristicas`,
         value: [
           `${Emoji.CHECK} Soporta URLs de YouTube y Spotify`,
-          `${Emoji.CHECK} Busqueda con 5 resultados para elegir`,
+          `${Emoji.CHECK} Busqueda con 4 resultados para elegir`,
           `${Emoji.CHECK} Playlists de Spotify (max ${50} canciones)`,
           `${Emoji.CHECK} Auto-desconexion por inactividad (3 min)`,
         ].join('\n'),
