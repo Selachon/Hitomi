@@ -66,7 +66,8 @@ npm start
 - discord.js
 - @discordjs/voice
 - @discordjs/opus
-- play-dl
+- @distube/ytdl-core
+- ytsr
 - spotify-url-info
 - ffmpeg-static
 - dotenv
