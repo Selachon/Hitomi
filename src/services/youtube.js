@@ -1,18 +1,15 @@
-import ytdl from '@distube/ytdl-core';
+import { spawn } from 'child_process';
 import ytsr from 'ytsr';
 import { Config } from '../utils/constants.js';
-import { config } from 'dotenv';
 
-config();
-
-import fs from 'fs';
-import path from 'path';
+// Path a yt-dlp (ajustar si es necesario)
+const YT_DLP_PATH = process.env.YT_DLP_PATH || 'yt-dlp';
 
 /**
  * Verifica si es una URL de YouTube
  */
 export function isYouTubeUrl(query) {
-  return ytdl.validateURL(query);
+  return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/.test(query);
 }
 
 /**
@@ -62,85 +59,96 @@ function parseDuration(duration) {
 }
 
 /**
- * Obtiene informacion de un video de YouTube por URL
+ * Obtiene informacion de un video de YouTube usando yt-dlp
  */
 export async function getYouTubeInfo(url) {
-  try {
-    if (!ytdl.validateURL(url)) {
-      console.error('URL de YouTube invalida:', url);
-      return null;
-    }
+  return new Promise((resolve, reject) => {
+    const args = [
+      '--dump-json',
+      '--no-playlist',
+      '--no-warnings',
+      url
+    ];
     
-    const info = await ytdl.getInfo(url);
+    const process = spawn(YT_DLP_PATH, args);
+    let stdout = '';
+    let stderr = '';
     
-    return {
-      title: info.videoDetails.title,
-      url: info.videoDetails.video_url,
-      duration: parseInt(info.videoDetails.lengthSeconds),
-      thumbnail: info.videoDetails.thumbnails?.[0]?.url || null,
-      author: info.videoDetails.author?.name || 'Desconocido',
-    };
-  } catch (error) {
-    console.error('Error obteniendo info de YouTube:', error);
-    return null;
-  }
+    process.stdout.on('data', data => {
+      stdout += data.toString();
+    });
+    
+    process.stderr.on('data', data => {
+      stderr += data.toString();
+    });
+    
+    process.on('close', code => {
+      if (code !== 0) {
+        console.error('yt-dlp error:', stderr);
+        resolve(null);
+        return;
+      }
+      
+      try {
+        const info = JSON.parse(stdout);
+        resolve({
+          title: info.title,
+          url: info.webpage_url || url,
+          duration: info.duration || 0,
+          thumbnail: info.thumbnail || null,
+          author: info.uploader || info.channel || 'Desconocido',
+        });
+      } catch (error) {
+        console.error('Error parsing yt-dlp output:', error);
+        resolve(null);
+      }
+    });
+    
+    process.on('error', error => {
+      console.error('Error spawning yt-dlp:', error);
+      resolve(null);
+    });
+  });
 }
 
 /**
- * Obtiene el stream de audio de un video
+ * Obtiene el stream de audio de un video usando yt-dlp
  */
 export async function getYouTubeStream(url) {
   if (!url) {
     throw new Error('URL no proporcionada para streaming');
   }
   
-  if (!ytdl.validateURL(url)) {
-    throw new Error(`URL de YouTube invalida: ${url}`);
-  }
+  // yt-dlp descarga el audio y lo envia a stdout
+  const args = [
+    '-f', 'bestaudio',
+    '-o', '-',  // Output a stdout
+    '--no-playlist',
+    '--no-warnings',
+    '--quiet',
+    url
+  ];
   
-  try {
-    const cookies = loadYouTubeCookies();
-    
-    const stream = ytdl(url, {
-      filter: 'audioonly',
-      quality: 'highestaudio',
-      highWaterMark: 1 << 25, // 32MB buffer
-      requestOptions: {
-        headers: {
-          Cookie: cookies,
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        },
-      },
-    });
-    
-    return {
-      stream,
-      type: 'arbitrary', // Para @discordjs/voice
-    };
-  } catch (error) {
-    console.error('Error obteniendo stream de YouTube:', error);
-    console.error('URL que causo error:', url);
-    throw error;
-  }
-}
-
-/**
- * Carga cookies de YouTube desde archivo
- */
-function loadYouTubeCookies() {
-  try {
-    const cookiesPath = process.env.YOUTUBE_COOKIES_FILE || './youtube_cookies.json';
-    const cookiesFile = path.resolve(cookiesPath);
-    
-    if (fs.existsSync(cookiesFile)) {
-      const cookies = JSON.parse(fs.readFileSync(cookiesFile, 'utf8'));
-      return cookies.map(c => `${c.name}=${c.value}`).join('; ');
+  const ytdlpProcess = spawn(YT_DLP_PATH, args, {
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  
+  ytdlpProcess.stderr.on('data', data => {
+    const msg = data.toString();
+    if (!msg.includes('WARNING')) {
+      console.error('yt-dlp stderr:', msg);
     }
-  } catch (error) {
-    console.error('Error cargando cookies de YouTube:', error);
-  }
+  });
   
-  return '';
+  ytdlpProcess.on('error', error => {
+    console.error('Error spawning yt-dlp:', error);
+  });
+  
+  return {
+    stream: ytdlpProcess.stdout,
+    type: 'arbitrary',
+    process: ytdlpProcess, // Para poder matarlo si es necesario
+  };
 }
 
 /**

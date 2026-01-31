@@ -161,7 +161,10 @@ export async function playNext(queue) {
   }
   
   try {
-    const { stream, type } = await getYouTubeStream(song.url);
+    const { stream, type, process: ytdlpProcess } = await getYouTubeStream(song.url);
+    
+    // Guardar proceso para poder matarlo despues
+    queue.currentProcess = ytdlpProcess;
     
     const resource = createAudioResource(stream, {
       inputType: type,
@@ -188,6 +191,14 @@ export async function playNext(queue) {
   } catch (error) {
     console.error('Error reproduciendo:', error);
     queue.currentSong = null;
+    
+    // Matar proceso si existe
+    if (queue.currentProcess) {
+      try {
+        queue.currentProcess.kill();
+      } catch (e) {}
+      queue.currentProcess = null;
+    }
     
     // Intentar con la siguiente
     if (queue.songs.length > 0) {
@@ -227,6 +238,14 @@ export function resume(queue) {
  * Salta la cancion actual
  */
 export function skip(queue) {
+  // Matar proceso de yt-dlp si existe
+  if (queue.currentProcess) {
+    try {
+      queue.currentProcess.kill();
+    } catch (e) {}
+    queue.currentProcess = null;
+  }
+  
   if (queue.player) {
     queue.player.stop();
     return true;
@@ -240,6 +259,14 @@ export function skip(queue) {
 export function stop(queue) {
   queue.songs = [];
   queue.currentSong = null;
+  
+  // Matar proceso de yt-dlp si existe
+  if (queue.currentProcess) {
+    try {
+      queue.currentProcess.kill();
+    } catch (e) {}
+    queue.currentProcess = null;
+  }
   
   if (queue.player) {
     queue.player.stop();
