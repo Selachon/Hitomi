@@ -10,4 +10,4 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY . .
 
-CMD ["npm", "deploy", "&", "npm", "start"]
+CMD ["npm", "run", "deploy", "&", "npm", "start"]
