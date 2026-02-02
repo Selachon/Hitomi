@@ -1,5 +1,5 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import { Colors, Emoji, Messages } from './constants.js';
+import { Colors, Emoji, Messages, Config } from './constants.js';
 
 /**
  * Formatea duracion en segundos a MM:SS o HH:MM:SS
@@ -207,7 +207,7 @@ export function helpEmbed() {
         value: [
           `${Emoji.CHECK} Soporta URLs de YouTube y Spotify`,
           `${Emoji.CHECK} Busqueda con 4 resultados para elegir`,
-          `${Emoji.CHECK} Playlists de Spotify (max ${50} canciones)`,
+          `${Emoji.CHECK} Playlists de Spotify (max ${Config.MAX_PLAYLIST_SONGS} canciones)`,
           `${Emoji.CHECK} Auto-desconexion por inactividad (3 min)`,
         ].join('\n'),
         inline: false
