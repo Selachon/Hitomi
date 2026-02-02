@@ -1,6 +1,5 @@
 import { spawn } from 'child_process';
 import youtubeDlExec from 'youtube-dl-exec';
-import ytsr from 'ytsr';
 import { Config } from '../utils/constants.js';
 
 // Usar el binario incluido en youtube-dl-exec
@@ -14,49 +13,68 @@ export function isYouTubeUrl(query) {
 }
 
 /**
- * Busca canciones en YouTube
+ * Busca canciones en YouTube usando yt-dlp
  * @returns {Promise<Array>} Array de resultados
  */
 export async function searchYouTube(query, limit = Config.SEARCH_RESULTS) {
-  try {
-    const filters = await ytsr.getFilters(query);
-    const filter = filters.get('Type').get('Videos');
-    
-    if (!filter) {
-      console.error('No se pudo obtener filtro de videos');
-      return [];
-    }
-    
-    const searchResults = await ytsr(filter.url, { limit: limit * 2 });
-    
-    return searchResults.items
-      .filter(item => item.type === 'video' && item.url)
-      .slice(0, limit)
-      .map(video => ({
-        title: video.title,
-        url: video.url,
-        duration: video.duration ? parseDuration(video.duration) : 0,
-        thumbnail: video.thumbnails?.[0]?.url || video.bestThumbnail?.url || null,
-        author: video.author?.name || 'Desconocido',
-      }));
-  } catch (error) {
-    console.error('Error buscando en YouTube:', error);
-    return [];
-  }
-}
+  return new Promise((resolve) => {
+    const args = [
+      `ytsearch${limit}:${query}`,
+      '--dump-json',
+      '--flat-playlist',
+      '--no-warnings',
+      '--default-search', 'ytsearch',
+    ];
 
-/**
- * Convierte duracion "HH:MM:SS" o "MM:SS" a segundos
- */
-function parseDuration(duration) {
-  if (!duration) return 0;
-  const parts = duration.split(':').map(Number);
-  if (parts.length === 3) {
-    return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  } else if (parts.length === 2) {
-    return parts[0] * 60 + parts[1];
-  }
-  return parts[0] || 0;
+    const process = spawn(YT_DLP_PATH, args);
+    let stdout = '';
+    let stderr = '';
+
+    process.stdout.on('data', data => {
+      stdout += data.toString();
+    });
+
+    process.stderr.on('data', data => {
+      stderr += data.toString();
+    });
+
+    process.on('close', code => {
+      if (code !== 0) {
+        console.error('yt-dlp search error:', stderr);
+        resolve([]);
+        return;
+      }
+
+      try {
+        // yt-dlp devuelve un JSON por linea
+        const results = stdout
+          .trim()
+          .split('\n')
+          .filter(line => line)
+          .map(line => {
+            const video = JSON.parse(line);
+            return {
+              title: video.title,
+              url: video.url || `https://www.youtube.com/watch?v=${video.id}`,
+              duration: video.duration || 0,
+              thumbnail: video.thumbnail || video.thumbnails?.[0]?.url || null,
+              author: video.uploader || video.channel || 'Desconocido',
+            };
+          })
+          .slice(0, limit);
+
+        resolve(results);
+      } catch (error) {
+        console.error('Error parsing yt-dlp search output:', error);
+        resolve([]);
+      }
+    });
+
+    process.on('error', error => {
+      console.error('Error spawning yt-dlp for search:', error);
+      resolve([]);
+    });
+  });
 }
 
 /**
