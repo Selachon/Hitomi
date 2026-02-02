@@ -91,5 +91,5 @@ export const Config = {
   SEARCH_RESULTS: 4, // 4 resultados + boton cancelar = 5 (max Discord)
   SEARCH_TIMEOUT: 30 * 1000, // 30 segundos
   DEFAULT_VOLUME: 50,
-  MAX_PLAYLIST_SONGS: 50,
+  MAX_PLAYLIST_SONGS: 100,
 };
