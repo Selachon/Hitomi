@@ -235,6 +235,22 @@ export function resume(queue) {
 }
 
 /**
+ * Mezcla aleatoriamente la cola (Fisher-Yates shuffle)
+ */
+export function shuffleQueue(queue) {
+  if (queue.songs.length <= 1) {
+    return false;
+  }
+
+  for (let i = queue.songs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [queue.songs[i], queue.songs[j]] = [queue.songs[j], queue.songs[i]];
+  }
+
+  return true;
+}
+
+/**
  * Salta la cancion actual
  */
 export function skip(queue) {

@@ -72,6 +72,7 @@ export const Messages = {
   SKIPPED: `${Emoji.SKIP} ¡Siguiente cancion~!`,
   STOPPED: `${Emoji.STOP} ¡Musica detenida! Bye bye~`,
   VOLUME_CHANGED: `${Emoji.VOLUME} Volumen cambiado~`,
+  SHUFFLED: `${Emoji.SPARKLE} ¡Cola mezclada aleatoriamente~!`,
   
   // Busqueda
   SEARCH_PROMPT: `${Emoji.SPARKLE} ¡Encontre estas opciones! Elige una~`,
