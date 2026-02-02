@@ -192,6 +192,7 @@ export function helpEmbed() {
         value: [
           '`/queue` - Muestra la cola de reproduccion',
           '`/nowplaying` - Muestra la cancion actual',
+          '`/shuffle` - Mezcla la cola aleatoriamente',
         ].join('\n'),
         inline: false
       },
