@@ -10,4 +10,5 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY . .
 
-CMD ["npm", "run", "deploy", "&", "npm", "start"]
+# Primero registra los comandos en Discord, luego inicia el bot
+CMD ["sh", "-c", "npm run deploy && npm start"]
