@@ -13,6 +13,8 @@ import { nowPlayingEmbed, goodbyeEmbed } from '../utils/embeds.js';
 
 // Map de colas por servidor
 const queues = new Map();
+const VOICE_READY_TIMEOUT = 60_000;
+const VOICE_CONNECT_RETRIES = 2;
 
 /**
  * Obtiene o crea una cola para un servidor
@@ -89,35 +91,49 @@ function setupPlayerEvents(queue) {
  * Conecta al canal de voz
  */
 export async function connectToChannel(channel, queue) {
-  const connection = joinVoiceChannel({
-    channelId: channel.id,
-    guildId: channel.guild.id,
-    adapterCreator: channel.guild.voiceAdapterCreator,
-    selfDeaf: true,
-  });
-  
-  try {
-    await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
-    connection.subscribe(queue.player);
-    queue.connection = connection;
-    
-    // Manejar desconexion
-    connection.on(VoiceConnectionStatus.Disconnected, async () => {
-      try {
-        await Promise.race([
-          entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
-          entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
-        ]);
-      } catch {
-        deleteQueue(queue.guildId);
-      }
+  let lastError;
+
+  for (let attempt = 1; attempt <= VOICE_CONNECT_RETRIES; attempt++) {
+    const connection = joinVoiceChannel({
+      channelId: channel.id,
+      guildId: channel.guild.id,
+      adapterCreator: channel.guild.voiceAdapterCreator,
+      selfDeaf: true,
     });
-    
-    return connection;
-  } catch (error) {
-    connection.destroy();
-    throw error;
+
+    try {
+      await entersState(connection, VoiceConnectionStatus.Ready, VOICE_READY_TIMEOUT);
+      connection.subscribe(queue.player);
+      queue.connection = connection;
+
+      // Manejar desconexion
+      connection.on(VoiceConnectionStatus.Disconnected, async () => {
+        try {
+          await Promise.race([
+            entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
+            entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
+          ]);
+        } catch {
+          try {
+            await entersState(connection, VoiceConnectionStatus.Connecting, 10_000);
+          } catch {
+            deleteQueue(queue.guildId);
+          }
+        }
+      });
+
+      return connection;
+    } catch (error) {
+      lastError = error;
+      connection.destroy();
+
+      if (attempt < VOICE_CONNECT_RETRIES) {
+        console.warn(`Conexion de voz fallida (intento ${attempt}/${VOICE_CONNECT_RETRIES}), reintentando...`);
+      }
+    }
   }
+
+  throw lastError;
 }
 
 /**

@@ -9,6 +9,10 @@ services:
       NODE_ENV: production
       DISCORD_TOKEN: ${DISCORD_TOKEN}
       CLIENT_ID: ${CLIENT_ID}
+      NODE_OPTIONS: --dns-result-order=ipv4first
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     logging:
       driver: json-file
       options:
