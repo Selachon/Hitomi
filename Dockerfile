@@ -2,7 +2,7 @@ FROM node:20-bookworm-slim
 
 # Instalar solo lo esencial
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 ffmpeg ca-certificates \
+  && apt-get install -y --no-install-recommends python3 ffmpeg ca-certificates make g++ pkg-config libopus-dev \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
