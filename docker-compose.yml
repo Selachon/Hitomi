@@ -2,7 +2,6 @@ version: "3.8"
 
 services:
   hitomi:
-    image: selachon/hitomi:latest
     build: .
     container_name: hitomi
     restart: unless-stopped
